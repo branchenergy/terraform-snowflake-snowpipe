@@ -1,2 +1,4 @@
 # terraforming-snowpipe
-A Terraform module for creating automatically-ingesting Snowflake pipes from S3
+
+This repository houses a Terraform module for creating automatically-ingesting Snowflake
+pipes from S3.
