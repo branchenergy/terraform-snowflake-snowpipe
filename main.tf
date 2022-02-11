@@ -93,7 +93,7 @@ resource "aws_iam_role_policy" "snowflake_integration" {
 }
 
 
-module "snowpipe" {
+module "inner" {
   for_each                       = var.prefix_tables
   source                         = "./inner"
   region                         = data.aws_s3_bucket.this.region
@@ -104,6 +104,7 @@ module "snowpipe" {
   schema                         = var.schema
   table_name                     = each.value
   file_format                    = var.file_format
+  storage_integration            = var.storage_integration
   storage_aws_iam_user_arn       = var.storage_aws_iam_user_arn
 }
 
