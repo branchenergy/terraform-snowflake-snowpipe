@@ -20,7 +20,7 @@ locals {
   notification_inputs = {
     for prefix, table in var.prefix_tables : prefix => {
       id            = "Saving ${table} table inputs from ${prefix}"
-      topic_arn     = module.snowpipe[prefix].topic_arn
+      topic_arn     = module.inner[prefix].topic_arn
       filter_prefix = prefix
     }
   }
@@ -74,7 +74,7 @@ data "aws_iam_policy_document" "snowflake_assume_role" {
       variable = "sts:ExternalId"
 
       values = [
-        aws_ssm_parameter.storage_aws_external_id.value
+        var.storage_aws_external_id
       ]
     }
   }
