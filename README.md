@@ -86,8 +86,12 @@ following [the section in the Snowflake docs](https://docs.snowflake.com/en/user
 `STORAGE_AWS_ROLE_ARN` is the value of the role ARN. We don't do this in Terraform because by
 default it's only possible for an account admin to do this.
 
-Having been created, you then need to run `DESCRIBE INTEGRATION <integration_name>;` in Snowflake
-to get the `STORAGE_AWS_IAM_USER_ARN` and `STORAGE_AWS_EXTERNAL_ID` property values
+Having been created, you then need to:
+
+- Run `DESCRIBE INTEGRATION <integration_name>;` in Snowflake to get the `STORAGE_AWS_IAM_USER_ARN`
+  and `STORAGE_AWS_EXTERNAL_ID` property values
+- Run `GRANT USAGE ON INTEGRATION <integration_name> TO ROLE <blah>;` in Snowflake, granting
+  permissions to the role that will be creating the stage and the pipe
 
 ### Step 3: Define the Prefix-Table mapping
 
