@@ -1,4 +1,4 @@
-# terraforming-snowpipe
+# Snowpipe
 
 This repository houses a Terraform module for creating automatically-ingesting Snowflake
 pipes from S3. In particular_, it implements [Option 2](https://docs.snowflake.com/en/user-guide/data-load-snowpipe-auto-s3.html#option-2-configuring-amazon-sns-to-automate-snowpipe-using-sqs-notifications)
