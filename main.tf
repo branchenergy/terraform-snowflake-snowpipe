@@ -95,7 +95,7 @@ resource "aws_iam_role_policy" "snowflake_integration" {
 
 module "inner" {
   for_each                       = var.prefix_tables
-  source                         = "./inner"
+  source                         = "./modules/inner"
   region                         = data.aws_s3_bucket.this.region
   bucket_arn                     = data.aws_s3_bucket.this.arn
   bucket_id                      = data.aws_s3_bucket.this.id
