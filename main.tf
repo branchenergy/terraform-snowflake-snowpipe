@@ -109,9 +109,9 @@ module "inner" {
 }
 
 resource "aws_s3_bucket_notification" "this" {
-  depends_on = [module.snowpipe]
+  depends_on = [module.inner]
 
-  bucket = var.bucket_id
+  bucket = data.aws_s3_bucket.this.id
 
   dynamic "topic" {
     for_each = local.notification_inputs
