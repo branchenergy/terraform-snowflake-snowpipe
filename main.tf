@@ -1,8 +1,26 @@
+# Terraform config
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 3.54"
+    }
+
+    snowflake = {
+      source  = "chanzuckerberg/snowflake"
+      version = "~> 0.25.24"
+    }
+  }
+
+  required_version = ">= 0.14.9"
+  experiments      = [module_variable_optional_attrs]
+}
+
 locals {
   notification_inputs = {
     for prefix, table in var.prefix_tables : prefix => {
       id            = "Saving ${table} table inputs from ${prefix}"
-      topic_arn     = module.snowflake[prefix].topic_arn
+      topic_arn     = module.snowpipe[prefix].topic_arn
       filter_prefix = prefix
     }
   }

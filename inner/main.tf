@@ -125,7 +125,7 @@ resource "snowflake_stage" "this" {
   depends_on = [aws_sns_topic_policy.this]
 }
 
-resource "snowflake_pipe" "pipe" {
+resource "snowflake_pipe" "this" {
   database = var.database
   schema   = var.schema
   name     = local.pipe_name

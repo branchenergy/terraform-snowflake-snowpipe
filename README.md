@@ -99,5 +99,14 @@ locals {
   tables         = yamldecode(file("tables.yaml")
   prefix_tables  = {
     for table in local.tables : "${table}/" => table
-  } 
+  }
+}
 ```
+
+As a result, we always load files from `{prefix}/` into `{table}`, so we don't have to remember
+which tables are loaded by which prefixes.
+
+### Step 4: Rock and Roll
+
+From there, it is a simple case of creating an instance of the module and passing the above
+variables to it.
