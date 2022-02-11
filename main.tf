@@ -9,6 +9,11 @@ locals {
 }
 
 
+data "aws_s3_bucket" "this" {
+  bucket = var.bucket_name
+}
+
+
 data "aws_iam_policy_document" "snowflake_integration" {
   statement {
     actions = [
@@ -17,7 +22,7 @@ data "aws_iam_policy_document" "snowflake_integration" {
     ]
 
     resources = [
-      "${var.bucket_arn}/*"
+      "${data.aws_s3_bucket.this.arn}/*"
     ]
   }
 
@@ -27,7 +32,7 @@ data "aws_iam_policy_document" "snowflake_integration" {
     ]
 
     resources = [
-      var.bucket_arn
+      data.aws_s3_bucket.this.arn
     ]
   }
 }
@@ -73,9 +78,9 @@ resource "aws_iam_role_policy" "snowflake_integration" {
 module "snowpipe" {
   for_each                       = var.prefix_tables
   source                         = "./inner"
-  region                         = var.region
-  bucket_arn                     = var.bucket_arn
-  bucket_id                      = var.bucket_id
+  region                         = data.aws_s3_bucket.this.region
+  bucket_arn                     = data.aws_s3_bucket.this.arn
+  bucket_id                      = data.aws_s3_bucket.this.id
   prefix                         = each.key
   database                       = var.database
   schema                         = var.schema

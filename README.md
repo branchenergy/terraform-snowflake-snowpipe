@@ -39,6 +39,7 @@ This module relies on the following being true to keep things as simple as possi
   COPY INTO [DATABASE].[SCHEMA].[TABLE_NAME]
   FROM @[DATABASE].[SCHEMA].STAGE_[TABLE_NAME]
   ```
+- We grant Snowflake `s3:GetObject` and `s3:GetObjectVersion` to _all_ objects in the S3 bucket
 - Prefixes don't overlap with one-another; so you can't have `interesting-files/` as one prefix
   and `/interesting-files/first-set` as another prefix; we haven't tested this, but it seems like a
   bad idea
@@ -50,12 +51,10 @@ The following variables need to be passed to the module for it to work (we'll go
 
 | Name                             | Type          | Description                                                                                                                           |
 |----------------------------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `region`                         | `string`      | The AWS region hosting the S3 bucket, for deriving the name of the SNS topic used for notifications                                   |
-| `bucket_arn`                     | `string`      | S3 bucket ARN                                                                                                                         |
-| `bucket_id`                      | `string`      | S3 bucket ID                                                                                                                          |
+| `bucket_name`                    | `string`      | S3 bucket name                                                                                                                        |
 | `prefix_tables`                  | `map(string)` | A mapping from *prefix* to *table* name, giving the S3 prefix under which the data files will be auto-ingested into the table 'table' |
 | `database`                       | `string`      | Target database name                                                                                                                  |
-| `schema`                         | `string`      | Target shcema name                                                                                                                    |
+| `schema`                         | `string`      | Target schema name                                                                                                                    |
 | `file_format`                    | `string`      | Snowflake file format used for the files under each prefix. **All files _must_ share the same file format!**                          |
 | `storage_integration`            | `string`      | Snowflake storage integration's name                                                                                                  |
 | `storage_aws_iam_user_arn`       | `string`      | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                                                   |
@@ -93,4 +92,12 @@ to get the `STORAGE_AWS_IAM_USER_ARN` and `STORAGE_AWS_EXTERNAL_ID` property val
 ### Step 3: Define the Prefix-Table mapping
 
 We do this in a YAML file and load it into a variable with `yamldecode(file("prefix-tables.yaml")`
-in Terraform.
+in Terraform. In fact, we just define a list of tables and define the mapping using:
+
+```hcl
+locals {
+  tables         = yamldecode(file("tables.yaml")
+  prefix_tables  = {
+    for table in local.tables : "${table}/" => table
+  } 
+```

@@ -1,15 +1,5 @@
-variable "region" {
-  type        = string
-  description = "AWS region housing the bucket"
-}
-
-variable "bucket_arn" {
-  description = "S3 bucket arn"
-  type        = string
-}
-
-variable "bucket_id" {
-  description = "S3 bucket ID"
+variable "bucket_name" {
+  description = "S3 bucket name"
   type        = string
 }
 
