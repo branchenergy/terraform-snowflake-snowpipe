@@ -105,7 +105,7 @@ data "aws_iam_policy_document" "this" {
     actions   = ["sns:Subscribe"]
     resources = [aws_sns_topic.this.arn]
     principals {
-      identifiers = [var.snowflake_external_account_arn]
+      identifiers = [var.storage_aws_iam_user_arn]
       type        = "AWS"
     }
 
@@ -119,7 +119,7 @@ resource "snowflake_stage" "this" {
   database = var.database
   schema   = var.schema
 
-  storage_integration = local.storage_integration
+  storage_integration = var.storage_integration
   file_format         = "FORMAT_NAME = ${var.database}.${var.schema}.${var.file_format}"
 
   depends_on = [aws_sns_topic_policy.this]
@@ -136,4 +136,8 @@ resource "snowflake_pipe" "pipe" {
   aws_sns_topic_arn = local.topic_arn
 
   depends_on = [snowflake_stage.this]
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
