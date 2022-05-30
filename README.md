@@ -100,7 +100,7 @@ in Terraform. In fact, we just define a list of tables and define the mapping us
 
 ```hcl
 locals {
-  tables         = yamldecode(file("tables.yaml")
+  tables         = yamldecode(file("tables.yaml"))
   prefix_tables  = {
     for table in local.tables : "${table}/" => table
   }

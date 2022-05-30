@@ -47,3 +47,13 @@ variable "storage_aws_iam_user_arn" {
   type        = string
   description = "Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property"
 }
+
+variable "pipe_copy_statement"{
+  type        = string
+  default     = null
+  description = <<-EOT
+    Statement for copying data from the pipe into the table; by default
+
+    `COPY INTO [database].[schema].[table_name] from @[database].[schema].[stage_name]`
+  EOT
+}

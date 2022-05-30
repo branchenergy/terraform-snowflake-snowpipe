@@ -4,7 +4,7 @@ variable "bucket_name" {
 }
 
 variable "prefix_tables" {
-  type        = map(string)
+  type        = map(map(string))
   description = "A mapping from an S3 bucket prefix to the Snowflake table name into which it should be loaded"
 }
 
@@ -46,4 +46,30 @@ variable "snowflake_role_path" {
 variable "snowflake_role_name" {
   type        = string
   description = "Snowflake role name"
+}
+
+variable "snowflake_user" {
+  description = "Snoeflake's user name"
+}
+
+variable "snowflake_account" {
+  description = "Snoeflake's account"
+}
+
+variable "snowflake_region" {
+  description = "Region where your snowflake instance lives"
+}
+
+variable "snowflake_private_key" {
+  description = "Private key for snowflake"
+}
+
+variable "pipe_copy_statement"{
+  type        = string
+  default     = null
+  description = <<-EOT
+    Statement for copying data from the pipe into the table; by default
+
+    `COPY INTO [database].[schema].[table_name] from @[database].[schema].[stage_name]`
+  EOT
 }
