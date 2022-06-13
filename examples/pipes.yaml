@@ -4,6 +4,7 @@ table_identifier_1:
   # Prefix where the files are saved after inside the target s3 bucket. It can have multiple levels
   prefix: prefix/
   comment: Pipe description
+  file_format: PARQUET
   # The copy statement is only necessary because we are using a .parquet format for our files
   # %s and %[n]s will be populated with the database and schema automatically
   copy_statement: >

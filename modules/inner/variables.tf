@@ -36,6 +36,7 @@ variable "table_name" {
 variable "file_format" {
   type        = string
   description = "Stage file format name"
+  default     = "CSV"
 }
 
 variable "storage_integration" {

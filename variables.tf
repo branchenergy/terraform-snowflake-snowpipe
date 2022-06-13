@@ -18,11 +18,6 @@ variable "schema" {
   description = "Snowflake database schema name"
 }
 
-variable "file_format" {
-  type        = string
-  description = "Stage file format name"
-}
-
 variable "storage_integration" {
   type        = string
   description = "Snowflake storage integration name"

@@ -115,7 +115,7 @@ module "inner" {
   database                 = var.database
   schema                   = var.schema
   table_name               = lookup(each.value, "name", null)
-  file_format              = var.file_format
+  file_format              = lookup(each.value, "file_format", null)
   storage_integration      = var.storage_integration
   storage_aws_iam_user_arn = var.storage_aws_iam_user_arn
   pipe_copy_statement      = lookup(each.value, "copy_statement", null)

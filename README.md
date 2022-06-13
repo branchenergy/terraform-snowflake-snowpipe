@@ -39,7 +39,7 @@ This module relies on the following being true to keep things as simple as possi
   - `aws_ssm_parameter.snowflake_external_account_arn`
   - `aws_ssm_parameter.snowflake_external_id`
   - Other permissions
-- All files share the same file format
+- The default file format is `CSV`
 - The default copy statements are defined as a simple
   ```sql
   COPY INTO [DATABASE].[SCHEMA].[TABLE_NAME]
@@ -61,7 +61,6 @@ The following variables need to be passed to the module for it to work (we'll go
 | `prefix_tables`                  | `map(map(string))` | A mapping from *table* to *table_name*, *prexix* and *copy_statement*, giving the S3 prefix under which the data files will be auto-ingested into the table 'table' |
 | `database`                       | `string`           | Target database name                                                                                                                                                |
 | `schema`                         | `string`           | Target schema name                                                                                                                                                  |
-| `file_format`                    | `string`           | Snowflake file format used for the files under each prefix. **All files _must_ share the same file format!**                                                        |
 | `storage_integration`            | `string`           | Snowflake storage integration's name                                                                                                                                |
 | `storage_aws_iam_user_arn`       | `string`           | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                                                                                 |
 | `storage_aws_external_id`        | `string`           | Snowflake storage integration's `STORAGE_AWS_EXTERNAL_ID` property                                                                                                  |
@@ -69,7 +68,9 @@ The following variables need to be passed to the module for it to work (we'll go
 | `snowflake_role_name`            | `string`           | AWS IAM name for the Snowflake role                                                                                                                                 |
 
 There is an example of how `prefix_tables` should look like as a `.yaml` file, that can be 
-then imported by the locals.
+then imported by the locals. 
+> **Note**: We moved the `file_format` variable into the `.yaml` file so 
+there is no longer a general constrain on file format.
 
 ## Usage Steps
 
@@ -115,6 +116,24 @@ locals {
 As a result, we always load files from `{prefix}/` into `{table}`, so we don't have to remember
 which tables are loaded by which prefixes. It also provides an easy way to map each table with 
 their respective `copy_statements`.
+
+> **Note**: In the previous version the module a `map(string)` was  required but in the new version requires a `map(map(string))`.
+> 
+> The previous version `map(string)` was created with code similar to:
+> ```hcl
+> # DEPRECATED
+> locals {
+>   tables         = yamldecode(file("tables.yaml"))
+>   prefix_tables  = {
+>     for table in local.tables : "${table}/" => table
+>   }
+> }
+> ```
+> but it is not necessary anymore.
+> 
+> **This is a breaking change** but it allow us to define each table independently without having constraings for all the 
+> tables and the code is simpler.
+> 
 
 #### Parquet
 The default `file format` is `CSV`, but when we want to use `PARQUET` we need to pass a 
