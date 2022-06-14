@@ -1,0 +1,23 @@
+locals {
+  pipes                 = yamldecode(file("pipes.yaml"))
+}
+
+module "snowflake-snowpipe" {
+  for_each                 = local.tables
+  source                   = "branchenergy/snowpipe/snowflake"
+  bucket_name              = "s3-bucket-name-${var.environment}"
+  prefix_tables            = local.pipes
+  database                 = "MY_DB"
+  schema                   = "SCHEMA"
+  file_format              = "PARQUET"
+  storage_integration      = var.storage_integration_name
+  storage_aws_iam_user_arn = aws_ssm_parameter.snowflake_external_account_arn.value
+  storage_aws_external_id  = aws_ssm_parameter.snowflake_external_id.value
+  snowflake_role_path      = var.snowflake_role_path
+  snowflake_role_name      = var.snowflake_role_name
+  snowflake_user           = var.snowflake_user
+  snowflake_account        = var.snowflake_account
+  snowflake_region         = var.snowflake_region
+  snowflake_private_key    = data.aws_secretsmanager_secret_version.snowflake_tf_private.secret_string
+}
+
