@@ -7,13 +7,12 @@ terraform {
     }
 
     snowflake = {
-      source  = "chanzuckerberg/snowflake"
-      version = "~> 0.25.24"
+      source  = "snowflake-labs/snowflake"
+      version = "~> 0.43.0"
     }
   }
 
   required_version = ">= 0.14.9"
-  experiments      = [module_variable_optional_attrs]
 }
 
 data "aws_caller_identity" "current" {}
