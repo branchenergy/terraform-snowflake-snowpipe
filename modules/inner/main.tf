@@ -26,6 +26,8 @@ locals {
   pipe_name        = "PIPE_${upper(var.table_name)}"
   topic_name       = join("-", ["s3-snowpipe", replace(local.table_name_lower, "_", "-")])
   topic_arn        = "arn:aws:sns:${var.region}:${data.aws_caller_identity.current.account_id}:${local.topic_name}"
+  default_copy_statement = upper("copy into ${var.database}.${var.schema}.${var.table_name} from @${var.database}.${var.schema}.${local.stage_name}")
+  copy_statement         = var.pipe_copy_statement == null ? local.default_copy_statement : format(var.pipe_copy_statement, var.database, var.schema)
 }
 
 resource "aws_sns_topic" "this" {
@@ -130,7 +132,7 @@ resource "snowflake_pipe" "this" {
   name     = local.pipe_name
 
   comment           = "${var.table_name} pipe"
-  copy_statement    = upper("copy into ${var.database}.${var.schema}.${var.table_name} from @${var.database}.${var.schema}.${local.stage_name}")
+  copy_statement    = local.copy_statement
   auto_ingest       = true
   aws_sns_topic_arn = local.topic_arn
 

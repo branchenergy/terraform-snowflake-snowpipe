@@ -1,0 +1,32 @@
+table_identifier_1:
+  # Table identifier and table_name can be the same
+  name: table_name
+  # Prefix where the files are saved after inside the target s3 bucket. It can have multiple levels
+  prefix: prefix/
+  comment: Pipe description
+  file_format: PARQUET
+  # The copy statement is only necessary because we are using a .parquet format for our files
+  # %s and %[n]s will be populated with the database and schema automatically
+  copy_statement: >
+    copy into  %s.%s.my_table 
+    (
+        table_id,
+        col_varchar,
+        col_numeric,
+        col_timestamp
+    )
+    from 
+    (
+      select
+        $1:table_id::varchar,
+        $1:col_varchar::varchar,
+        $1:col_numeric::NUMBER(38,0),
+        $1:col_timestamp::varchar::TIMESTAMP_NTZ(9)
+      from @%[1]s.%[2]s.MY_STAGE
+    )
+
+table_identifier_2:
+  name: other_table_name
+  prefix: prefix/secondary
+  comment: Other pipe description
+  # NOTE: removing the copy_statement is not tested and might cause issues. In that case null can be passed

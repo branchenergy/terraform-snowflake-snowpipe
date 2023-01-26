@@ -33,8 +33,14 @@ This module relies on the following being true to keep things as simple as possi
 
 - All Snowflake objects exist/are created under the same database and schema: the tables,
   file format, stages and pipes
-- All files share the same file format
-- All copy statements are defined as a simple
+- The following are created on top of this module (not an extensive list):
+  - Tables
+  - File Format
+  - `aws_ssm_parameter.snowflake_external_account_arn`
+  - `aws_ssm_parameter.snowflake_external_id`
+  - Other permissions
+- The default file format is `CSV`
+- The default copy statements are defined as a simple
   ```sql
   COPY INTO [DATABASE].[SCHEMA].[TABLE_NAME]
   FROM @[DATABASE].[SCHEMA].STAGE_[TABLE_NAME]
@@ -49,19 +55,22 @@ This module relies on the following being true to keep things as simple as possi
 
 The following variables need to be passed to the module for it to work (we'll go through these in detail!):
 
-| Name                             | Type          | Description                                                                                                                           |
-|----------------------------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `bucket_name`                    | `string`      | S3 bucket name                                                                                                                        |
-| `prefix_tables`                  | `map(string)` | A mapping from *prefix* to *table* name, giving the S3 prefix under which the data files will be auto-ingested into the table 'table' |
-| `database`                       | `string`      | Target database name                                                                                                                  |
-| `schema`                         | `string`      | Target schema name                                                                                                                    |
-| `file_format`                    | `string`      | Snowflake file format used for the files under each prefix. **All files _must_ share the same file format!**                          |
-| `storage_integration`            | `string`      | Snowflake storage integration's name                                                                                                  |
-| `storage_aws_iam_user_arn`       | `string`      | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                                                   |
-| `storage_aws_external_id`        | `string`      | Snowflake storage integration's `STORAGE_AWS_EXTERNAL_ID` property                                                                    |
-| `snowflake_role_path`            | `string`      | AWS IAM path for the Snowflake role                                                                                                   |
-| `snowflake_role_name`            | `string`      | AWS IAM name for the Snowflake role                                                                                                   |
+| Name                             | Type               | Description                                                                                                                                                         |
+|----------------------------------|--------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `bucket_name`                    | `string`           | S3 bucket name                                                                                                                                                      |
+| `prefix_tables`                  | `map(map(string))` | A mapping from *table* to *table_name*, *prexix* and *copy_statement*, giving the S3 prefix under which the data files will be auto-ingested into the table 'table' |
+| `database`                       | `string`           | Target database name                                                                                                                                                |
+| `schema`                         | `string`           | Target schema name                                                                                                                                                  |
+| `storage_integration`            | `string`           | Snowflake storage integration's name                                                                                                                                |
+| `storage_aws_iam_user_arn`       | `string`           | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                                                                                 |
+| `storage_aws_external_id`        | `string`           | Snowflake storage integration's `STORAGE_AWS_EXTERNAL_ID` property                                                                                                  |
+| `snowflake_role_path`            | `string`           | AWS IAM path for the Snowflake role                                                                                                                                 |
+| `snowflake_role_name`            | `string`           | AWS IAM name for the Snowflake role                                                                                                                                 |
 
+There is an example of how `prefix_tables` should look like as a `.yaml` file, that can be 
+then imported by the locals. 
+> **Note**: We moved the `file_format` variable into the `.yaml` file so 
+there is no longer a general constrain on file format.
 
 ## Usage Steps
 
@@ -93,22 +102,44 @@ Having been created, you then need to:
 - Run `GRANT USAGE ON INTEGRATION <integration_name> TO ROLE <blah>;` in Snowflake, granting
   permissions to the role that will be creating the stage and the pipe
 
-### Step 3: Define the Prefix-Table mapping
+### Step 3: Load the Prefix-Table mapping
 
-We do this in a YAML file and load it into a variable with `yamldecode(file("prefix-tables.yaml")`
+We do this in a YAML file and load it into a variable with `yamldecode(file("pipes.yaml")`
 in Terraform. In fact, we just define a list of tables and define the mapping using:
 
 ```hcl
 locals {
-  tables         = yamldecode(file("tables.yaml")
-  prefix_tables  = {
-    for table in local.tables : "${table}/" => table
-  }
+  tables         = yamldecode(file("pipes.yaml"))
 }
 ```
 
 As a result, we always load files from `{prefix}/` into `{table}`, so we don't have to remember
-which tables are loaded by which prefixes.
+which tables are loaded by which prefixes. It also provides an easy way to map each table with 
+their respective `copy_statements`.
+
+> **Note**: In the previous version the module a `map(string)` was  required but in the new version requires a `map(map(string))`.
+> 
+> The previous version `map(string)` was created with code similar to:
+> ```hcl
+> # DEPRECATED
+> locals {
+>   tables         = yamldecode(file("tables.yaml"))
+>   prefix_tables  = {
+>     for table in local.tables : "${table}/" => table
+>   }
+> }
+> ```
+> but it is not necessary anymore.
+> 
+> **This is a breaking change** but it allow us to define each table independently without having constraings for all the 
+> tables and the code is simpler.
+> 
+
+#### Parquet
+The default `file format` is `CSV`, but when we want to use `PARQUET` we need to pass a 
+bespoke `copy_statement` to the pipe. The reason for this is that `PARQUET` is interpreted as 
+a single column by Snowflake. As it is mention in the [documentation](https://docs.snowflake.com/en/user-guide/script-data-load-transform-parquet.html#sql-script-1-load-parquet-data).
+An example of a `PARQUET` copy statement has been provided in the `pipes.yaml` in the examples.
 
 ### Step 4: Rock and Roll
 

@@ -17,10 +17,10 @@ terraform {
 
 locals {
   notification_inputs = {
-    for prefix, table in var.prefix_tables : prefix => {
-      id            = "Saving ${table} table inputs from ${prefix}"
-      topic_arn     = module.inner[prefix].topic_arn
-      filter_prefix = prefix
+    for table, values in var.prefix_tables : table => {
+      id            = "Saving ${table} table inputs from ${values["prefix"]}"
+      topic_arn     = module.inner[table].topic_arn
+      filter_prefix = values["prefix"]
     }
   }
 }
@@ -51,6 +51,18 @@ data "aws_iam_policy_document" "snowflake_integration" {
     resources = [
       data.aws_s3_bucket.this.arn
     ]
+  }
+
+  statement {
+    actions = [
+      "s3:DeleteObject",
+      "s3:PutObject"
+    ]
+
+    resources = [
+      "${data.aws_s3_bucket.this.arn}/*"
+    ]
+
   }
 }
 
@@ -93,18 +105,19 @@ resource "aws_iam_role_policy" "snowflake_integration" {
 
 
 module "inner" {
-  for_each                       = var.prefix_tables
-  source                         = "./modules/inner"
-  region                         = data.aws_s3_bucket.this.region
-  bucket_arn                     = data.aws_s3_bucket.this.arn
-  bucket_id                      = data.aws_s3_bucket.this.id
-  prefix                         = each.key
-  database                       = var.database
-  schema                         = var.schema
-  table_name                     = each.value
-  file_format                    = var.file_format
-  storage_integration            = var.storage_integration
-  storage_aws_iam_user_arn       = var.storage_aws_iam_user_arn
+  for_each                 = var.prefix_tables
+  source                   = "./modules/inner"
+  region                   = data.aws_s3_bucket.this.region
+  bucket_arn               = data.aws_s3_bucket.this.arn
+  bucket_id                = data.aws_s3_bucket.this.id
+  prefix                   = lookup(each.value, "prefix", null)
+  database                 = var.database
+  schema                   = var.schema
+  table_name               = lookup(each.value, "name", null)
+  file_format              = lookup(each.value, "file_format", null)
+  storage_integration      = var.storage_integration
+  storage_aws_iam_user_arn = var.storage_aws_iam_user_arn
+  pipe_copy_statement      = lookup(each.value, "copy_statement", null)
 }
 
 resource "aws_s3_bucket_notification" "this" {
