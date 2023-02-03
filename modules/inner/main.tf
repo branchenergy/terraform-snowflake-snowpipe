@@ -26,10 +26,12 @@ locals {
   pipe_name        = "PIPE_${upper(var.table_name)}"
   topic_name       = join("-", ["s3-snowpipe", replace(local.table_name_lower, "_", "-")])
   topic_arn        = "arn:aws:sns:${var.region}:${data.aws_caller_identity.current.account_id}:${local.topic_name}"
+  copy_statement   = upper("copy into ${var.database}.${var.schema}.${var.table_name} from @${var.database}.${var.schema}.${local.stage_name}")
 }
 
 resource "aws_sns_topic" "this" {
-  name = local.topic_name
+  count = var.add_pipe ? 1 : 0
+  name  = local.topic_name
 
   lifecycle {
     prevent_destroy = true
@@ -37,7 +39,8 @@ resource "aws_sns_topic" "this" {
 }
 
 resource "aws_sns_topic_policy" "this" {
-  arn    = aws_sns_topic.this.arn
+  count  = var.add_pipe ? 1 : 0
+  arn    = aws_sns_topic.this[0].arn
   policy = data.aws_iam_policy_document.this.json
 
   lifecycle {
@@ -47,6 +50,7 @@ resource "aws_sns_topic_policy" "this" {
 
 
 data "aws_iam_policy_document" "this" {
+  count = var.add_pipe ? 1 : 0
 
   policy_id = "__default_policy_ID"
 
@@ -125,13 +129,15 @@ resource "snowflake_stage" "this" {
 }
 
 resource "snowflake_pipe" "this" {
+  count    = var.add_pipe ? 1 : 0
   database = var.database
   schema   = var.schema
   name     = local.pipe_name
 
-  comment           = "${var.table_name} pipe"
-  copy_statement    = upper("copy into ${var.database}.${var.schema}.${var.table_name} from @${var.database}.${var.schema}.${local.stage_name}")
-  auto_ingest       = true
+  comment        = "${var.table_name} pipe"
+  copy_statement = try(var.copy_statement, local.copy_statement)
+
+  auto_ingest       = var.add_pipe
   aws_sns_topic_arn = local.topic_arn
 
   depends_on = [snowflake_stage.this]
