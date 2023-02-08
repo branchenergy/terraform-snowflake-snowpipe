@@ -107,7 +107,7 @@ module "inner" {
   database                 = var.database
   schema                   = var.schema
   table_name               = each.value.table_name
-  file_format              = try(each.value.file_format, var.file_format)
+  file_format              = coalesce(each.value.file_format, var.file_format)
   copy_statement           = each.value.copy_statement
   storage_integration      = var.storage_integration
   storage_aws_iam_user_arn = var.storage_aws_iam_user_arn
