@@ -45,12 +45,6 @@ variable "copy_statement" {
   nullable    = true
 }
 
-variable "add_pipe" {
-  type        = bool
-  description = "If `false`, don't create an SNS topic and pipe for this "
-  default     = true
-}
-
 variable "storage_integration" {
   type        = string
   description = "Snowflake storage integration name"

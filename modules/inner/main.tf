@@ -30,7 +30,6 @@ locals {
 }
 
 resource "aws_sns_topic" "this" {
-  count = var.add_pipe ? 1 : 0
   name  = local.topic_name
 
   lifecycle {
@@ -39,8 +38,7 @@ resource "aws_sns_topic" "this" {
 }
 
 resource "aws_sns_topic_policy" "this" {
-  count  = var.add_pipe ? 1 : 0
-  arn    = aws_sns_topic.this[0].arn
+  arn    = aws_sns_topic.this.arn
   policy = data.aws_iam_policy_document.this.json
 
   lifecycle {
@@ -50,8 +48,6 @@ resource "aws_sns_topic_policy" "this" {
 
 
 data "aws_iam_policy_document" "this" {
-  count = var.add_pipe ? 1 : 0
-
   policy_id = "__default_policy_ID"
 
   # The AWS account itself can do anything...
@@ -129,7 +125,6 @@ resource "snowflake_stage" "this" {
 }
 
 resource "snowflake_pipe" "this" {
-  count    = var.add_pipe ? 1 : 0
   database = var.database
   schema   = var.schema
   name     = local.pipe_name
