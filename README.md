@@ -27,18 +27,19 @@ module. Nota bene.
   alphabetically ordered).
 
 
+## Version 4.0 Changes
+
+Version 4.0 changes the structure of the `prefix_tables` object, and adds support for each table
+and stage pair to have their own `COPY` statement and file format defined. See below for more
+details!
+
+
 ### Requirements
 
 This module relies on the following being true to keep things as simple as possible:
 
 - All Snowflake objects exist/are created under the same database and schema: the tables,
   file format, stages and pipes
-- All files share the same file format
-- All copy statements are defined as a simple
-  ```sql
-  COPY INTO [DATABASE].[SCHEMA].[TABLE_NAME]
-  FROM @[DATABASE].[SCHEMA].STAGE_[TABLE_NAME]
-  ```
 - We grant Snowflake `s3:GetObject` and `s3:GetObjectVersion` to _all_ objects in the S3 bucket
 - Prefixes don't overlap with one-another; so you can't have `interesting-files/` as one prefix
   and `/interesting-files/first-set` as another prefix; we haven't tested this, but it seems like a
@@ -49,18 +50,18 @@ This module relies on the following being true to keep things as simple as possi
 
 The following variables need to be passed to the module for it to work (we'll go through these in detail!):
 
-| Name                             | Type          | Description                                                                                                  |
-|----------------------------------|---------------|--------------------------------------------------------------------------------------------------------------|
-| `bucket_name`                    | `string`      | S3 bucket name                                                                                               |
-| `prefix_tables`                  | `map(object)` | A mapping from *prefix* to a table's details; see the following table for details of the object's type       |
-| `database`                       | `string`      | Target database name                                                                                         |
-| `schema`                         | `string`      | Target schema name                                                                                           |
-| `file_format`                    | `string`      | Snowflake file format used for the files without their own `file_format` given (see details below)           |
-| `storage_integration`            | `string`      | Snowflake storage integration's name                                                                         |
-| `storage_aws_iam_user_arn`       | `string`      | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                          |
-| `storage_aws_external_id`        | `string`      | Snowflake storage integration's `STORAGE_AWS_EXTERNAL_ID` property                                           |
-| `snowflake_role_path`            | `string`      | AWS IAM path for the Snowflake role                                                                          |
-| `snowflake_role_name`            | `string`      | AWS IAM name for the Snowflake role                                                                          |
+| Name                             | Type          | Description                                                                                              |
+|----------------------------------|---------------|----------------------------------------------------------------------------------------------------------|
+| `bucket_name`                    | `string`      | S3 bucket name                                                                                           |
+| `prefix_tables`                  | `map(object)` | A mapping from *prefix* to a table's details; see the following table for details of the object's type   |
+| `database`                       | `string`      | Target database name                                                                                     |
+| `schema`                         | `string`      | Target schema name                                                                                       |
+| `file_format`                    | `string`      | Snowflake file format used for the files without their own `file_format` given (see details below)       |
+| `storage_integration`            | `string`      | Snowflake storage integration's name                                                                     |
+| `storage_aws_iam_user_arn`       | `string`      | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                      |
+| `storage_aws_external_id`        | `string`      | Snowflake storage integration's `STORAGE_AWS_EXTERNAL_ID` property                                       |
+| `snowflake_role_path`            | `string`      | AWS IAM path for the Snowflake role                                                                      |
+| `snowflake_role_name`            | `string`      | AWS IAM name for the Snowflake role                                                                      |
 
 
 ### `prefix_tables` Object Structure
@@ -72,18 +73,16 @@ object({
   table_name     = string
   file_format    = optional(string)
   copy_statement = optional(string)
-  add_pipe       = optional(string, true)
 })
 ```
 
 The only required parameter is `table_name`, which gives the name in the target schema of the
 table to copy to. The remaining parameters are optional:
 
-| Name            | Description                                                                                                                                              |
-|-----------------|--------------------------------------------------------------------------------------------------------------------------------------|
-| file_format     | The name of the file format to use for the table, if it differs from the default                                                     |
-| copy_statement  | A custom copy statement for this stage and table only; useful for parquet files                                                      |
-| add_pipe        | A boolean which indicates that a pipe and SNS topic should be created; if not, will still create the stage for use with bulk inserts |
+| Name            | Description                                                                      |
+|-----------------|----------------------------------------------------------------------------------|
+| file_format     | The name of the file format to use for the table, if it differs from the default |
+| copy_statement  | A custom copy statement for this stage and table only; useful for parquet files  |
 
 
 ## Usage Steps

@@ -22,7 +22,7 @@ locals {
       id            = "Saving ${table.table_name} table inputs from ${prefix}"
       topic_arn     = module.inner[prefix].topic_arn
       filter_prefix = prefix
-    } if try(table.add_pipe, true)
+    }
   }
 }
 
@@ -109,7 +109,6 @@ module "inner" {
   table_name               = each.value.table_name
   file_format              = try(each.value.file_format, var.file_format)
   copy_statement           = each.value.copy_statement
-  add_pipe                 = try(each.value.add_pipe, true)
   storage_integration      = var.storage_integration
   storage_aws_iam_user_arn = var.storage_aws_iam_user_arn
 }
