@@ -4,8 +4,22 @@ variable "bucket_name" {
 }
 
 variable "prefix_tables" {
-  type        = map(string)
-  description = "A mapping from an S3 bucket prefix to the Snowflake table name into which it should be loaded"
+  type = map(
+    object({
+      table_name     = string
+      file_format    = optional(string)
+      copy_statement = optional(string)
+    })
+  )
+  description = <<-EOT
+    A mapping from an S3 bucket prefix to the Snowflake table which it
+    should be loaded; `table_name` is required and the following
+    variables are optional:
+
+    - `file_format`, for the stage; if not given uses the `file_format` variable to the
+      parent module
+    - `copy_statement`, if not given uses a basic `COPY INTO [table] FROM @[stage]`
+  EOT
 }
 
 variable "database" {
@@ -20,7 +34,7 @@ variable "schema" {
 
 variable "file_format" {
   type        = string
-  description = "Stage file format name"
+  description = "Stage file format name used for tables without a custom `file_format` set"
 }
 
 variable "storage_integration" {

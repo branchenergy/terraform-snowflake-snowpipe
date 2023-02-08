@@ -26,10 +26,11 @@ locals {
   pipe_name        = "PIPE_${upper(var.table_name)}"
   topic_name       = join("-", ["s3-snowpipe", replace(local.table_name_lower, "_", "-")])
   topic_arn        = "arn:aws:sns:${var.region}:${data.aws_caller_identity.current.account_id}:${local.topic_name}"
+  copy_statement   = upper("copy into ${var.database}.${var.schema}.${var.table_name} from @${var.database}.${var.schema}.${local.stage_name}")
 }
 
 resource "aws_sns_topic" "this" {
-  name = local.topic_name
+  name  = local.topic_name
 
   lifecycle {
     prevent_destroy = true
@@ -47,7 +48,6 @@ resource "aws_sns_topic_policy" "this" {
 
 
 data "aws_iam_policy_document" "this" {
-
   policy_id = "__default_policy_ID"
 
   # The AWS account itself can do anything...
@@ -129,9 +129,10 @@ resource "snowflake_pipe" "this" {
   schema   = var.schema
   name     = local.pipe_name
 
-  comment           = "${var.table_name} pipe"
-  copy_statement    = upper("copy into ${var.database}.${var.schema}.${var.table_name} from @${var.database}.${var.schema}.${local.stage_name}")
-  auto_ingest       = true
+  comment        = "${var.table_name} pipe"
+  copy_statement = try(var.copy_statement, local.copy_statement)
+
+  auto_ingest       = var.add_pipe
   aws_sns_topic_arn = local.topic_arn
 
   depends_on = [snowflake_stage.this]

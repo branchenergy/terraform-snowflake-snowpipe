@@ -12,16 +12,17 @@ terraform {
     }
   }
 
-  required_version = ">= 0.14.9"
+  required_version = ">= 1.1"
 }
+
 
 locals {
   notification_inputs = {
     for prefix, table in var.prefix_tables : prefix => {
-      id            = "Saving ${table} table inputs from ${prefix}"
+      id            = "Saving ${table.table_name} table inputs from ${prefix}"
       topic_arn     = module.inner[prefix].topic_arn
       filter_prefix = prefix
-    }
+    } if try(table.add_pipe, true)
   }
 }
 
@@ -54,11 +55,13 @@ data "aws_iam_policy_document" "snowflake_integration" {
   }
 }
 
+
 resource "aws_iam_policy" "snowflake_integration" {
   policy      = data.aws_iam_policy_document.snowflake_integration.json
   path        = "/data/data-feeds/"
   description = "Data snowflake integration policy"
 }
+
 
 data "aws_iam_policy_document" "snowflake_assume_role" {
   statement {
@@ -79,11 +82,13 @@ data "aws_iam_policy_document" "snowflake_assume_role" {
   }
 }
 
+
 resource "aws_iam_role" "snowflake_integration" {
   name               = var.snowflake_role_name
   path               = var.snowflake_role_path
   assume_role_policy = data.aws_iam_policy_document.snowflake_assume_role.json
 }
+
 
 resource "aws_iam_role_policy" "snowflake_integration" {
   name   = var.snowflake_role_name
@@ -93,19 +98,22 @@ resource "aws_iam_role_policy" "snowflake_integration" {
 
 
 module "inner" {
-  for_each                       = var.prefix_tables
-  source                         = "./modules/inner"
-  region                         = data.aws_s3_bucket.this.region
-  bucket_arn                     = data.aws_s3_bucket.this.arn
-  bucket_id                      = data.aws_s3_bucket.this.id
-  prefix                         = each.key
-  database                       = var.database
-  schema                         = var.schema
-  table_name                     = each.value
-  file_format                    = var.file_format
-  storage_integration            = var.storage_integration
-  storage_aws_iam_user_arn       = var.storage_aws_iam_user_arn
+  for_each                 = var.prefix_tables
+  source                   = "./modules/inner"
+  region                   = data.aws_s3_bucket.this.region
+  bucket_arn               = data.aws_s3_bucket.this.arn
+  bucket_id                = data.aws_s3_bucket.this.id
+  prefix                   = each.key
+  database                 = var.database
+  schema                   = var.schema
+  table_name               = each.value.table_name
+  file_format              = try(each.value.file_format, var.file_format)
+  copy_statement           = each.value.copy_statement
+  add_pipe                 = try(each.value.add_pipe, true)
+  storage_integration      = var.storage_integration
+  storage_aws_iam_user_arn = var.storage_aws_iam_user_arn
 }
+
 
 resource "aws_s3_bucket_notification" "this" {
   depends_on = [module.inner]

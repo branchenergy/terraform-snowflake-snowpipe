@@ -49,18 +49,41 @@ This module relies on the following being true to keep things as simple as possi
 
 The following variables need to be passed to the module for it to work (we'll go through these in detail!):
 
-| Name                             | Type          | Description                                                                                                                           |
-|----------------------------------|---------------|---------------------------------------------------------------------------------------------------------------------------------------|
-| `bucket_name`                    | `string`      | S3 bucket name                                                                                                                        |
-| `prefix_tables`                  | `map(string)` | A mapping from *prefix* to *table* name, giving the S3 prefix under which the data files will be auto-ingested into the table 'table' |
-| `database`                       | `string`      | Target database name                                                                                                                  |
-| `schema`                         | `string`      | Target schema name                                                                                                                    |
-| `file_format`                    | `string`      | Snowflake file format used for the files under each prefix. **All files _must_ share the same file format!**                          |
-| `storage_integration`            | `string`      | Snowflake storage integration's name                                                                                                  |
-| `storage_aws_iam_user_arn`       | `string`      | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                                                   |
-| `storage_aws_external_id`        | `string`      | Snowflake storage integration's `STORAGE_AWS_EXTERNAL_ID` property                                                                    |
-| `snowflake_role_path`            | `string`      | AWS IAM path for the Snowflake role                                                                                                   |
-| `snowflake_role_name`            | `string`      | AWS IAM name for the Snowflake role                                                                                                   |
+| Name                             | Type          | Description                                                                                                  |
+|----------------------------------|---------------|--------------------------------------------------------------------------------------------------------------|
+| `bucket_name`                    | `string`      | S3 bucket name                                                                                               |
+| `prefix_tables`                  | `map(object)` | A mapping from *prefix* to a table's details; see the following table for details of the object's type       |
+| `database`                       | `string`      | Target database name                                                                                         |
+| `schema`                         | `string`      | Target schema name                                                                                           |
+| `file_format`                    | `string`      | Snowflake file format used for the files without their own `file_format` given (see details below)           |
+| `storage_integration`            | `string`      | Snowflake storage integration's name                                                                         |
+| `storage_aws_iam_user_arn`       | `string`      | Snowflake storage integration's `STORAGE_AWS_IAM_USER_ARN` property                                          |
+| `storage_aws_external_id`        | `string`      | Snowflake storage integration's `STORAGE_AWS_EXTERNAL_ID` property                                           |
+| `snowflake_role_path`            | `string`      | AWS IAM path for the Snowflake role                                                                          |
+| `snowflake_role_name`            | `string`      | AWS IAM name for the Snowflake role                                                                          |
+
+
+### `prefix_tables` Object Structure
+
+The `prefix_tables` variable is a `map` to an object with the following structure:
+
+```hcl
+object({
+  table_name     = string
+  file_format    = optional(string)
+  copy_statement = optional(string)
+  add_pipe       = optional(string, true)
+})
+```
+
+The only required parameter is `table_name`, which gives the name in the target schema of the
+table to copy to. The remaining parameters are optional:
+
+| Name            | Description                                                                                                                                              |
+|-----------------|--------------------------------------------------------------------------------------------------------------------------------------|
+| file_format     | The name of the file format to use for the table, if it differs from the default                                                     |
+| copy_statement  | A custom copy statement for this stage and table only; useful for parquet files                                                      |
+| add_pipe        | A boolean which indicates that a pipe and SNS topic should be created; if not, will still create the stage for use with bulk inserts |
 
 
 ## Usage Steps

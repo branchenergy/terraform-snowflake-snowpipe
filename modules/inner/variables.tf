@@ -38,6 +38,13 @@ variable "file_format" {
   description = "Stage file format name"
 }
 
+variable "copy_statement" {
+  type        = string
+  description = "Optional copy statement for the pipe; if not given, uses `COPY INTO [table] FROM @[stage]"
+  default     = null
+  nullable    = true
+}
+
 variable "storage_integration" {
   type        = string
   description = "Snowflake storage integration name"
