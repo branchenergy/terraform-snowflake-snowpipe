@@ -132,7 +132,7 @@ resource "snowflake_pipe" "this" {
   comment        = "${var.table_name} pipe"
   copy_statement = try(var.copy_statement, local.copy_statement)
 
-  auto_ingest       = var.add_pipe
+  auto_ingest       = true
   aws_sns_topic_arn = local.topic_arn
 
   depends_on = [snowflake_stage.this]
