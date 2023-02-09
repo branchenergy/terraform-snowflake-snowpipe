@@ -130,7 +130,7 @@ resource "snowflake_pipe" "this" {
   name     = local.pipe_name
 
   comment        = "${var.table_name} pipe"
-  copy_statement = try(var.copy_statement, local.copy_statement)
+  copy_statement = coalesce(var.copy_statement, local.copy_statement)
 
   auto_ingest       = true
   aws_sns_topic_arn = local.topic_arn
